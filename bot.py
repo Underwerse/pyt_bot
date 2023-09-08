@@ -65,7 +65,7 @@ def send_welcome(message):
     global chat_id
     chat_id = message.chat.id
     markup = types.ReplyKeyboardMarkup(row_width=1)
-    item1 = types.KeyboardButton("Выбери тип кухни")
+    item1 = types.KeyboardButton("Погнали искать тебе рецепт!")
     markup.add(item1)
     bot.send_message(chat_id, "Хэлоу, я бот-объебот (в смысле объедение-бот), помогаю в поиске рецептов блюд", reply_markup=markup)
 
@@ -76,7 +76,7 @@ def handle_message(message):
     row_width=3
     global selected_cuisine, selected_diet, ingredients, translated_cuisines, translated_diets
 
-    if message.text == "Выбери тип кухни":
+    if message.text == "Погнали искать тебе рецепт!":
         cuisine_markup = types.ReplyKeyboardMarkup(row_width=row_width)
         # Используем переведенные названия для отображения на кнопках меню
         translated_cuisines = list(cuisine_translations.keys())
@@ -105,11 +105,7 @@ def handle_message(message):
         selected_diet = diet_translations[message.text]
         bot.send_message(chat_id, f"Ты выбрал диету: {message.text}\nТеперь перечисли через запятую, какие ты хочешь использовать ингредиенты", reply_markup=hide_markup)
     elif ',' in message.text:
-        # ingredients = [ingredient.strip() for ingredient in message.text.split(',')]
-
-        # Переводим ингредиенты с русского на английский
-        # ingredients = [translator.translate(ingredient, src='ru', dest='en').text for ingredient in ingredients]
-        ingredients = translator.translate(message.text, src='ru', dest='en').text
+        ingredients = translator.translate(message.text, src='ru', dest='en').text.replace(', ', ',')
 
         bot.send_message(chat_id, f"Ты выбрал ингредиенты: {message.text}")
         # Добавляем кнопку "Найти рецепты"
@@ -130,7 +126,7 @@ def search_recipe(message):
     query = message.text
 
     # Отправляем запрос к API для поиска рецептов
-    response = requests.get(f"https://api.spoonacular.com/recipes/complexSearch?apiKey={FOOD_API_KEY}&cuisine={selected_cuisine}&diet={selected_diet}&ingredients={ingredients}")
+    response = requests.get(f"https://api.spoonacular.com/recipes/complexSearch?apiKey={FOOD_API_KEY}&cuisine={selected_cuisine}&diet={selected_diet}&includeIngredients={ingredients}")
 
     if response.status_code == 200:
         data = response.json()
