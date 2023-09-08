@@ -56,7 +56,7 @@ diet_translations = {
     "Безглютеновая": "Gluten Free", 
     "Вегетарианская": "Vegetarian", 
     "Веганская": "Vegan", 
-    "Обычная": "Regular"
+    "Обычная": ""
 }
 hide_markup = types.ReplyKeyboardRemove()
 
@@ -88,8 +88,8 @@ def handle_message(message):
         
         bot.send_message(chat_id, "Выбери тип кухни:", reply_markup=cuisine_markup)
     elif message.text in translated_cuisines:
-        selected_cuisine = message.text
-        bot.send_message(chat_id, f"Ты выбрал тип кухни: {selected_cuisine}")
+        selected_cuisine = cuisine_translations[message.text]
+        bot.send_message(chat_id, f"Ты выбрал тип кухни: {message.text}")
         
         # Создаем клавиатуру для выбора диеты
         diet_markup = types.ReplyKeyboardMarkup(row_width=2)
@@ -102,11 +102,9 @@ def handle_message(message):
         
         bot.send_message(chat_id, "Выбери диету:", reply_markup=diet_markup)
     elif message.text in translated_diets:
-        selected_diet = message.text
-        bot.send_message(chat_id, f"Ты выбрал диету: {selected_diet}\nТеперь перечисли через запятую, какие ты хочешь использовать ингредиенты", reply_markup=hide_markup)
-                
-        
-    elif ', ' in message.text:
+        selected_diet = diet_translations[message.text]
+        bot.send_message(chat_id, f"Ты выбрал диету: {message.text}\nТеперь перечисли через запятую, какие ты хочешь использовать ингредиенты", reply_markup=hide_markup)
+    elif ',' in message.text:
         # ingredients = [ingredient.strip() for ingredient in message.text.split(',')]
 
         # Переводим ингредиенты с русского на английский
@@ -114,8 +112,48 @@ def handle_message(message):
         ingredients = translator.translate(message.text, src='ru', dest='en').text
 
         bot.send_message(chat_id, f"Ты выбрал ингредиенты: {message.text}")
+        # Добавляем кнопку "Найти рецепты"
+        find_recipes_button = types.KeyboardButton("Найти рецепты")
+        additional_markup = types.ReplyKeyboardMarkup(row_width=1)
+        additional_markup.add(find_recipes_button)
+        bot.send_message(chat_id, "Теперь нажми 'Найти рецепты' для поиска рецептов.", reply_markup=additional_markup)
+    elif message.text == "Найти рецепты":
+        if selected_cuisine or selected_diet or ingredients:
+            search_recipe(message)
+        else:
+            bot.send_message(chat_id, "Пожалуйста, выбери тип кухни, диету и ингредиенты сначала.")
     else:
         bot.send_message(chat_id, "Пожалуйста, используй кнопки для выбора опции.")
+
+def search_recipe(message):
+    # Получаем текст запроса пользователя
+    query = message.text
+
+    # Отправляем запрос к API для поиска рецептов
+    response = requests.get(f"https://api.spoonacular.com/recipes/complexSearch?apiKey={FOOD_API_KEY}&cuisine={selected_cuisine}&diet={selected_diet}&ingredients={ingredients}")
+
+    if response.status_code == 200:
+        data = response.json()
+        recipes = data.get("results")
+
+        if recipes:
+            bot.reply_to(message, "Вот несколько рецептов, которые могут вас заинтересовать (первые 3):")
+            for i, recipe in enumerate(recipes[:3]):
+                recipe_id = recipe.get("id")
+                recipe_info_response = requests.get(f"https://api.spoonacular.com/recipes/{recipe_id}/information?includeNutrition=false&apiKey={FOOD_API_KEY}")
+                if recipe_info_response.status_code == 200:
+                    recipe_info = recipe_info_response.json()
+                    title = recipe_info.get("title")
+                    link = recipe_info.get("sourceUrl")
+                    image = recipe_info.get("image")
+                    bot.send_message(message.chat.id, f"{i + 1}. {translator.translate(title, src='en', dest='ru').text}: {link}", reply_markup=hide_markup)
+                    bot.send_photo(message.chat.id, image, caption=f"![{title}]({image})")
+                else:
+                    bot.reply_to(message, "Извините, не удалось получить информацию о рецепте.")
+        else:
+            bot.reply_to(message, "Извините, я не смог найти рецептов по вашему запросу.")
+    else:
+        bot.reply_to(message, "Извините, произошла ошибка при поиске рецептов.")
 
 # Запуск бота
 if __name__ == "__main__":
