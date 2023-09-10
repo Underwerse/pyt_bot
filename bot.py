@@ -62,15 +62,17 @@ translated_diets = list(diet_translations.keys())
 
 # markup для скрытия клавиатуры
 hide_markup = types.ReplyKeyboardRemove()
+# markup для показа начального меню выбора
+start_over_button = types.KeyboardButton("Начать поиск рецепта")
+get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
+markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+markup.add(start_over_button, get_advice_button)
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     # global chat_id
     chat_id = message.chat.id
-    start_over_button = types.KeyboardButton("Начать поиск рецепта")
-    get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
-    markup = types.ReplyKeyboardMarkup(row_width=2)
-    markup.add(start_over_button, get_advice_button)
+    
     bot.send_message(chat_id, "Хэлоу, я бот-объебот (в смысле объедение-бот), помогаю в поиске рецептов блюд и еще могу дать совет", reply_markup=markup)
 
 # Обработчик текстовых сообщений
@@ -82,7 +84,7 @@ def handle_message(message):
     global selected_cuisine, selected_diet, ingredients, translated_cuisines, translated_diets
 
     if message.text == "Начать поиск рецепта":
-        cuisine_markup = types.ReplyKeyboardMarkup(row_width=row_width)
+        cuisine_markup = types.ReplyKeyboardMarkup(row_width=row_width, resize_keyboard=True)
 
         # Разбиваем массив на подмассивы по row_width элементов и добавляем их в клавиатуру
         for i in range(0, len(translated_cuisines), row_width):
@@ -95,7 +97,7 @@ def handle_message(message):
         bot.send_message(chat_id, f"Ты выбрал тип кухни: {message.text}")
 
         # Создаем клавиатуру для выбора диеты
-        diet_markup = types.ReplyKeyboardMarkup(row_width=2)
+        diet_markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
 
         # Разбиваем массив на подмассивы по 2 элемента и добавляем их в клавиатуру
         for i in range(0, len(translated_diets), 2):
@@ -112,7 +114,7 @@ def handle_message(message):
         bot.send_message(chat_id, f"Ты выбрал ингредиенты: {message.text}")
         # Добавляем кнопку "Найти рецепты"
         find_recipes_button = types.KeyboardButton("Найти рецепты")
-        additional_markup = types.ReplyKeyboardMarkup(row_width=1)
+        additional_markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
         additional_markup.add(find_recipes_button)
         bot.send_message(chat_id, "Теперь нажми 'Найти рецепты' для поиска рецептов.", reply_markup=additional_markup)
     elif message.text == "Найти рецепты":
@@ -138,7 +140,7 @@ def search_recipe(message, regular):
         recipes = data.get("results")
 
         if recipes:
-            bot.reply_to(message, "Нашел для тебя кое-что:", reply_markup=hide_markup)
+            bot.reply_to(message, "Нашел для тебя кое-что:", reply_markup=markup)
             for i, recipe in enumerate(recipes[:3]):
                 recipe_id = recipe.get("id")
                 # Получаем подробности рецепта по его id
@@ -162,12 +164,8 @@ def search_recipe(message, regular):
             else:
                 bot.reply_to(message, "Сорян, но я что-то не смог найти рецептов по такому запросу.")
             
-            # Добавляем кнопку "Начать поиск рецепта" в конце списка рецептов
-            start_over_button = types.KeyboardButton("Начать поиск рецепта")
-            get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
-            additional_markup = types.ReplyKeyboardMarkup(row_width=2)
-            additional_markup.add(start_over_button, get_advice_button)
-            bot.send_message(message.chat.id, "Погнали искать тебе рецепт! Ну или совет может хочешь?", reply_markup=additional_markup)
+            
+            bot.send_message(message.chat.id, "Погнали искать тебе рецепт! Ну или совет может хочешь?", reply_markup=markup)
     else:
         bot.reply_to(message, "Сорян, но произошла ошибка из-за кривых рук программёра.")
 
@@ -183,15 +181,15 @@ def give_advice(message):
         advice = data.get("text")
 
     if advice:
-        bot.send_message(chat_id, advice)
+        bot.send_message(chat_id, advice, reply_markup=markup)
     else:
         bot.reply_to(message, "Сорян, но что-то нет у меня для тебя советов.")
 
-    # Добавляем кнопку "Начать поиск рецепта" в конце списка рецептов
-    start_over_button = types.KeyboardButton("Начать поиск рецепта")
-    get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
-    additional_markup = types.ReplyKeyboardMarkup(row_width=2)
-    additional_markup.add(start_over_button, get_advice_button)
+    # # Добавляем кнопку "Начать поиск рецепта" в конце списка рецептов
+    # start_over_button = types.KeyboardButton("Начать поиск рецепта")
+    # get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
+    # additional_markup = types.ReplyKeyboardMarkup(row_width=2)
+    # additional_markup.add(start_over_button, get_advice_button)
 
 # Запуск бота
 if __name__ == "__main__":
