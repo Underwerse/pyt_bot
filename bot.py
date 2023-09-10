@@ -131,9 +131,9 @@ def handle_message(message):
 def search_recipe(message, regular):
     response = None
     if regular:
-        response = requests.get(f"https://api.spoonacular.com/recipes/complexSearch?apiKey={FOOD_API_KEY}&cuisine={selected_cuisine}&diet={selected_diet}&includeIngredients={ingredients}")
+        response = requests.get(f"https://api.spoonacular.com/recipes/complexSearch?apiKey={FOOD_API_KEY}&cuisine={selected_cuisine}&diet={selected_diet}&instructionsRequired=true&includeIngredients={ingredients}")
     else:
-        response = requests.get(f"https://api.spoonacular.com/recipes/complexSearch?apiKey={FOOD_API_KEY}&cuisine={selected_cuisine}&diet={selected_diet}")
+        response = requests.get(f"https://api.spoonacular.com/recipes/complexSearch?apiKey={FOOD_API_KEY}&cuisine={selected_cuisine}&diet={selected_diet}&instructionsRequired=true")
 
     if response.status_code == 200:
         data = response.json()
