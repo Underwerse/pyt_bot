@@ -71,7 +71,7 @@ def send_welcome(message):
     get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
     markup = types.ReplyKeyboardMarkup(row_width=2)
     markup.add(start_over_button, get_advice_button)
-    bot.send_message(chat_id, "Хэлоу, я бот-объебот (в смысле объедение-бот), помогаю в поиске рецептов блюд", reply_markup=markup)
+    bot.send_message(chat_id, "Хэлоу, я бот-объебот (в смысле объедение-бот), помогаю в поиске рецептов блюд и еще могу дать совет", reply_markup=markup)
 
 # Обработчик текстовых сообщений
 @bot.message_handler(func=lambda message: True)
@@ -121,23 +121,7 @@ def handle_message(message):
         else:
             bot.send_message(chat_id, "Пожалуйста, выбери тип кухни, диету и ингредиенты сначала.")
     elif message.text == "Дай-ка лучше мне совет":
-        # Отправляем запрос к API для поиска рецептов
-        response = requests.get(FGA_UNCENSORED_API_URL)
-
-        if response.status_code == 200:
-            data = response.json()
-            advice = data.get("text")
-
-        if advice:
-            bot.send_message(chat_id, advice)
-        else:
-            bot.reply_to(message, "Сорян, но что-то нет у меня для тебя советов.")
-
-        # Добавляем кнопку "Начать поиск рецепта" в конце списка рецептов
-        start_over_button = types.KeyboardButton("Начать поиск рецепта")
-        get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
-        additional_markup = types.ReplyKeyboardMarkup(row_width=2)
-        additional_markup.add(start_over_button, get_advice_button)
+        give_advice(message)
     else:
         bot.send_message(chat_id, "Похоже, ты указал 1 ингредиент ну или написал отсебятину. Посмотри еще раз сообщение выше и сделай как сказали, блеать!")
 
@@ -186,6 +170,28 @@ def search_recipe(message, regular):
             bot.send_message(message.chat.id, "Погнали искать тебе рецепт! Ну или совет может хочешь?", reply_markup=additional_markup)
     else:
         bot.reply_to(message, "Сорян, но произошла ошибка из-за кривых рук программёра.")
+
+# Функция поиска совета
+def give_advice(message):
+    chat_id = message.chat.id
+    # Отправляем запрос к API для поиска рецептов
+    response = requests.get(FGA_UNCENSORED_API_URL)
+    advice = None
+
+    if response.status_code == 200:
+        data = response.json()
+        advice = data.get("text")
+
+    if advice:
+        bot.send_message(chat_id, advice)
+    else:
+        bot.reply_to(message, "Сорян, но что-то нет у меня для тебя советов.")
+
+    # Добавляем кнопку "Начать поиск рецепта" в конце списка рецептов
+    start_over_button = types.KeyboardButton("Начать поиск рецепта")
+    get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
+    additional_markup = types.ReplyKeyboardMarkup(row_width=2)
+    additional_markup.add(start_over_button, get_advice_button)
 
 # Запуск бота
 if __name__ == "__main__":
