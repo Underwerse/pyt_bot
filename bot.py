@@ -183,13 +183,7 @@ def give_advice(message):
     if advice:
         bot.send_message(chat_id, advice, reply_markup=markup)
     else:
-        bot.reply_to(message, "Сорян, но что-то нет у меня для тебя советов.")
-
-    # # Добавляем кнопку "Начать поиск рецепта" в конце списка рецептов
-    # start_over_button = types.KeyboardButton("Начать поиск рецепта")
-    # get_advice_button = types.KeyboardButton("Дай-ка лучше мне совет")
-    # additional_markup = types.ReplyKeyboardMarkup(row_width=2)
-    # additional_markup.add(start_over_button, get_advice_button)
+        bot.reply_to(message, "Сорян, но что-то нет у меня для тебя советов.", reply_markup=markup)
 
 # Запуск бота
 if __name__ == "__main__":
